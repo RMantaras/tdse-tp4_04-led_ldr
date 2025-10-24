@@ -49,6 +49,7 @@
 
 /********************** macros and definitions *******************************/
 
+#define AVERAGER_SIZE (10)
 
 /********************** internal data declaration ****************************/
 
@@ -78,13 +79,20 @@ void task_adc_update(void *parameters)
 {
 
 	shared_data_type *shared_data = (shared_data_type *) parameters;
+	uint32_t averaged = 0;
+	uint16_t value;
 
-	if (HAL_OK==ADC_Poll_Read(&shared_data->adc_value)) {
-		shared_data->adc_end_of_conversion = true;
+	for (uint16_t averager=0 ; averager<AVERAGER_SIZE ; averager++) {
+		//Activate the ADC peripheral and start conversions
+		if (HAL_OK==ADC_Poll_Read(&value)) {
+			shared_data->adc_end_of_conversion = true;
+			averaged += value;
+		}
 	}
-	else {
-		LOGGER_LOG("error\n");
-	}
+	shared_data->adc_end_of_conversion = true;
+	averaged = averaged / AVERAGER_SIZE;
+	shared_data->adc_value = averaged;
+
 }
 
 
